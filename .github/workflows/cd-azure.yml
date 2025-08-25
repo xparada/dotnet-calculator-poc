@@ -1,0 +1,27 @@
+name: CD to Azure App Service
+
+on:
+  workflow_run:
+    workflows: ["CI (.NET)"]
+    types: [completed]
+  # (opcional) permitir lanzarlo manualmente:
+  # workflow_dispatch:
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Download artifact from CI
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp_publish
+          path: publish
+
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.MYWEBAPI_POC }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish
