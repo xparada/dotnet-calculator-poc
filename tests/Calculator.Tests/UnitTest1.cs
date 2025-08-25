@@ -13,6 +13,13 @@ public class CalculatorServiceTests
     }
 
     [Fact]
+    public void Subtract_Works()
+    {
+        var svc = new CalculatorService();
+        Assert.Equal(2, svc.Subtract(5, 3));
+    }
+
+    [Fact]
     public void Divide_ByZero_Throws()
     {
         var svc = new CalculatorService();
