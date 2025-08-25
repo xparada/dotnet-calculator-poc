@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  actions: read  # necesario para descargar artefactos de otro workflow
+  actions: read
 
 jobs:
   deploy:
@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      - name: Download artifact from CI
+      - name: Download artifacts from CI (all, merged)
         uses: actions/download-artifact@v4
         with:
-          name: webapp_publish
-          path: publish
           run-id: ${{ github.event.workflow_run.id }}
+          path: publish
+          merge-multiple: true   # baja todos y los fusiona en ./publish
 
       - name: Show downloaded artifact (sanity check)
         run: |
@@ -38,6 +38,4 @@ jobs:
           package: publish
 
       - name: Health check
-        run: |
-          echo "Checking health..."
-          curl -f --retry 5 --retry-delay 3 "https://${{ secrets.MYWEBAPI_POC }}.azurewebsites.net/health"
+        run: curl -f --retry 5 --retry-delay 3 "https://${{ secrets.MYWEBAPI_POC }}.azurewebsites.net/health"
