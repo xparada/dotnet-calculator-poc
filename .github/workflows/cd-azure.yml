@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   deploy:
@@ -15,14 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      - name: Download artifacts from CI (all, merged)
-        uses: actions/download-artifact@v4
+      - name: Checkout source at triggering commit
+        uses: actions/checkout@v4
         with:
-          run-id: ${{ github.event.workflow_run.id }}
-          path: publish
-          merge-multiple: true   # baja todos y los fusiona en ./publish
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Show downloaded artifact (sanity check)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish API artifact
+        run: dotnet publish src/Calculator.Api/Calculator.Api.csproj -c Release -o ./publish
+
+      - name: Show publish output (sanity check)
         run: |
           echo "Contents of ./publish:"
           ls -la ./publish
