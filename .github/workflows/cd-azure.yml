@@ -45,5 +45,23 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: publish
 
-      - name: Health check
-        run: curl -f --retry 5 --retry-delay 3 "https://${{ secrets.MYWEBAPI_POC }}.azurewebsites.net/health"
+      - name: Health check with retries
+        env:
+          HOST: ${{ secrets.MYWEBAPI_POC }}
+        run: |
+          set -e
+          URL="https://${HOST}.azurewebsites.net/health"
+          echo "Checking $URL ..."
+          # Espera y reintenta hasta 2 minutos
+          for i in $(seq 1 24); do
+            CODE=$(curl -sSk -o /dev/null -w "%{http_code}" -L "$URL" || true)
+            if [ "$CODE" = "200" ]; then
+              echo "✅ Health OK (HTTP 200)"; exit 0
+            fi
+            echo "Attempt $i: got HTTP $CODE, retrying..."
+            sleep 5
+          done
+          echo "❌ Health did not return 200 within the timeout. Dumping response:"
+          curl -sSk -L "$URL" || true
+          exit 1
+
